@@ -3,7 +3,7 @@
 This is the backend component of [KVantage app](https://github.com/kosail/KVantage), a minimal control center for Lenovo laptops on Linux.
 
 ---
-KVantage Battery Daemon (`kvand`) is a daemon written in Go specifically for Linux systems. Its purpose is to provide a secure and efficient way to interact with Lenovo-specific ACPI interfaces exposed through `/proc/acpi/call`.
+KVantage Battery Daemon (`kvand`) is a daemon written in Go specifically for Linux systems. Its purpose is to provide a secure and efficient way to interact with Lenovo-specific ACPI interfaces exposed through `/proc/acpi/call`. I decided to write it in Go due issues I got using Kotlin Native on NixOS, and most importantly, because Go binaries are one sole executable. Simple enough to run on any distro.
 
 > As you may already know, these interfaces allow reading and writing settings such as battery conservation mode, rapid charging, and performance profiles, but they require root privileges to access.
 
@@ -33,6 +33,6 @@ Contributions are welcome! Feel free to fork the repository and submit pull requ
 ---
 > **Note:** KVantage is a personal learning project and is not affiliated with Lenovo or any other brand or product.
 ---
-KVantage - kvand Copyright © 2025, kosail
+KVantage Battery Daemon - kvand Copyright © 2025, kosail
 <br>
 With love, from Honduras.

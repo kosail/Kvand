@@ -115,7 +115,7 @@ func main() {
 }
 
 func helpCommand() {
-	fmt.Printf("%s%sKvantage Battery Daemon v1.0_BETA%s\n", Bold, FgCyan, Reset)
+	fmt.Printf("%s%sKvantage Battery Daemon v1.0%s\n", Bold, FgCyan, Reset)
 	fmt.Println()
 
 	var builder strings.Builder
@@ -256,7 +256,7 @@ func writeAcpiCall(command string) {
 		return
 	}
 
-	fmt.Printf("%sWrite OK%s\n", FgGreen, Reset)
+	// fmt.Printf("%sWrite OK%s\n", FgGreen, Reset) // This is for debugging purposes
 }
 
 func readAcpiCall() {
