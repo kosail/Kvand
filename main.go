@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -169,11 +168,11 @@ func parseCommand(tokens []string) {
 	if tokens[0] == "get" {
 		switch tokens[1] {
 		case "performance":
-			executeAcpiCommand(GET_PERFORMANCE_MODE_STATUS)
+			getStatus(GET_PERFORMANCE_MODE_STATUS)
 		case "conservation":
-			executeAcpiCommand(GET_BATT_CONSERVATION_STATUS)
+			getStatus(GET_BATT_CONSERVATION_STATUS)
 		case "rapid":
-			executeAcpiCommand(GET_RAPID_CHARGE_STATUS)
+			getStatus(GET_RAPID_CHARGE_STATUS)
 		default:
 			var builder strings.Builder
 			builder.WriteString(FgYellow + "Invalid get option. Available get modes: " + "\n")
@@ -230,59 +229,59 @@ func parseCommand(tokens []string) {
 // ██╔══██║██║     ██╔═══╝ ██║    ██║     ██╔══██║██║     ██║     ╚════██║
 // ██║  ██║╚██████╗██║     ██║    ╚██████╗██║  ██║███████╗███████╗███████║
 // ╚═╝  ╚═╝ ╚═════╝╚═╝     ╚═╝     ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝
+// Important note:
+// ACPI is not as fast as I thought. When I need to check the current setting of a device, ACPI is blazing fast from whe
+// I write the request and by when the response is available. Both Write and Read operations can be done sequentially.
+// However, when doing writes to change the status or behavior of the hardware... well, now here is the issue.
+//
+// It takes around 1 second from when I write the new setting to the call interface, to when the setting is set and the
+// call interface returns the new value as a confirmation of the change being successful.
+//
+// Due to this limitation, is not possible to perform a read call right away after a setting has been written.
+// Instead, I will have the front end to manually call a read operation from the backend after it has requested a write operation.
 
-func writeAcpiCall(command string) error {
+func writeAcpiCall(command string) {
 	// Open the file with write permissions
 	file, err := os.OpenFile(ACPI_CALL_PATH, os.O_WRONLY, 0)
 	if err != nil {
-		return fmt.Errorf("failed to open %s %v", ACPI_CALL_PATH, err)
+		fmt.Printf("%sError: failed to open ACPI call interface. Information about the error:%s\n %v\n", FgRed, Reset, err)
+		return
 	}
 	defer file.Close()
 
 	// Write the command
 	_, err = file.WriteString(command)
 	if err != nil {
-		return fmt.Errorf("failed to write to %s: %v", ACPI_CALL_PATH, err)
+		fmt.Printf("%sError: failed to write to ACPI call interface. Information about the error:%s\n %v\n", FgRed, Reset, err)
+		return
 	}
 
-	return nil
+	fmt.Printf("%sWrite OK%s\n", FgGreen, Reset)
 }
 
-func readAcpiCall() (string, error) {
+func readAcpiCall() {
 	// Open the file with read permissions
 	file, err := os.OpenFile(ACPI_CALL_PATH, os.O_RDONLY, 0)
 	if err != nil {
-		return "", fmt.Errorf("failed to open %s: %v", ACPI_CALL_PATH, err)
+		fmt.Printf("%sError: failed to open ACPI call interface. Information about the error:%s\n %v\n", FgRed, Reset, err)
 	}
 	defer file.Close()
 
 	// Read the response
 	scanner := bufio.NewScanner(file)
 	if !scanner.Scan() {
-		return "", errors.New("no data returned from ACPI")
+		fmt.Printf("%sError: No data returned from ACPI.%s\n %v\n", FgRed, Reset)
+		return
 	}
 
-	return scanner.Text(), nil
+	fmt.Println(scanner.Text())
 }
 
 // Getters
-func executeAcpiCommand(command string) {
-	err := writeAcpiCall(command)
+func getStatus(command string) {
+	writeAcpiCall(command)
 
-	if err != nil {
-		fmt.Printf("%sAn error has occurred during the ACPI write call. Information about the error:%s\n %v\n", FgRed, Reset, err)
-
-		return
-	}
-
-	result, err := readAcpiCall()
-
-	if err != nil {
-		fmt.Printf("%sAn error has occurred during the ACPI read call. Information about the error:%s\n %v\n", FgRed, Reset, err)
-		return
-	}
-
-	fmt.Println(result)
+	readAcpiCall()
 }
 
 // Setters
@@ -302,15 +301,15 @@ func setPerformanceProfile(mode int) {
 	}
 
 	if mode == 0 {
-		executeAcpiCommand(SET_PERFORMANCE_MODE_INTELLIGENT_COOLING)
+		writeAcpiCall(SET_PERFORMANCE_MODE_INTELLIGENT_COOLING)
 	}
 
 	if mode == 1 {
-		executeAcpiCommand(SET_PERFORMANCE_MODE_EXTREME_PERFORMANCE)
+		writeAcpiCall(SET_PERFORMANCE_MODE_EXTREME_PERFORMANCE)
 	}
 
 	if mode == 2 {
-		executeAcpiCommand(SET_PERFORMANCE_MODE_POWER_SAVING)
+		writeAcpiCall(SET_PERFORMANCE_MODE_POWER_SAVING)
 	}
 }
 
@@ -322,21 +321,13 @@ func setConservation(mode int) {
 	}
 
 	if mode == 0 {
-		executeAcpiCommand(SET_BATT_CONSERVATION_OFF)
+		writeAcpiCall(SET_BATT_CONSERVATION_OFF)
 	}
 
 	if mode == 1 {
-		executeAcpiCommand(SET_BATT_CONSERVATION_ON)
+		writeAcpiCall(SET_BATT_CONSERVATION_ON)
 	}
 
-	result, err := readAcpiCall()
-
-	if err != nil {
-		fmt.Printf("%sAn error has occurred during the ACPI read call. Information about the error:%s\n %v\n", FgRed, Reset, err)
-		return
-	}
-
-	fmt.Println(result)
 }
 
 func setRapidCharge(mode int) {
@@ -348,10 +339,10 @@ func setRapidCharge(mode int) {
 
 
 	if mode == 0 {
-		executeAcpiCommand(SET_RAPID_CHARGE_OFF)
+		writeAcpiCall(SET_RAPID_CHARGE_OFF)
 	}
 
 	if mode == 1 {
-		executeAcpiCommand(SET_RAPID_CHARGE_ON)
+		writeAcpiCall(SET_RAPID_CHARGE_ON)
 	}
 }
