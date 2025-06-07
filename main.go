@@ -91,7 +91,8 @@ func main() {
 
 	if os.Getegid() == 0 {
 		fmt.Printf("%s> Root privileges confirmed. Executing as root.%s\n", FgGreen, Reset)
-		fmt.Printf("%s> KvanD initialized. Listening for commands...%s\n", FgBlue, Reset)
+		fmt.Printf("%s> KvanD initialized. Launching sentinel signal to frontend:%s\n", FgBlue, Reset)
+		fmt.Println("READY")
 
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
