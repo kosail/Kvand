@@ -258,9 +258,8 @@ func writeAcpiCall(command string) {
 		return
 	}
 
-	os.Stdout.Write([]byte("OK\n")) // Immediate output, no buffering.
-	// I know I can do a fmt.Println and os.Stdout.Sync, but I wanted to try how much of a difference it makes to write
-	// Directly, more considering that this OK is extremely important or the GUI falls into IO blocking due multiple commands
+	fmt.Println("OK")
+	os.Stdout.Sync()
 }
 
 func readAcpiCall() {
