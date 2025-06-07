@@ -275,7 +275,7 @@ func readAcpiCall() {
 		return
 	}
 
-	fmt.Println(scanner.Text())
+	fmt.Println(strings.Trim(scanner.Text(), "\x00\n "))
 }
 
 // Getters
